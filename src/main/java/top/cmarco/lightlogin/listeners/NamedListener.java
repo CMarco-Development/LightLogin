@@ -18,6 +18,10 @@
 
 package top.cmarco.lightlogin.listeners;
 
+import io.papermc.paper.threadedregions.scheduler.EntityScheduler;
+import io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
@@ -39,9 +43,9 @@ public abstract class NamedListener implements Listener {
         player.addPotionEffect(PotionEffectType.BLINDNESS.createEffect(20*60*60, 1));
     }
 
-    protected void runSync(@NotNull Plugin plugin, @NotNull Runnable runnable) {
-        BukkitScheduler scheduler = plugin.getServer().getScheduler();
-        scheduler.runTask(plugin, runnable);
+    protected void runSyncEntity(@NotNull final Entity entity, @NotNull final Plugin plugin, @NotNull final Runnable runnable) {
+        EntityScheduler scheduler = entity.getScheduler();
+        scheduler.execute(plugin, runnable, null, 1L);
     }
 
     protected NamedListener(@NotNull String name) {

@@ -18,6 +18,7 @@
 
 package top.cmarco.lightlogin.data;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public class BasicAuthenticationManager implements AuthenticationManager {
     protected final Set<UUID> unregisteredSet = new CopyOnWriteArraySet<>();
     protected final Set<UUID> unloginnedSet = new CopyOnWriteArraySet<>();
 
-    private BukkitTask loginMsg = null, registerMsg = null;
+    private ScheduledTask loginMsg = null, registerMsg = null;
 
     public BasicAuthenticationManager(@NotNull LightLoginPlugin plugin) {
         this.plugin = plugin;
@@ -52,7 +53,7 @@ public class BasicAuthenticationManager implements AuthenticationManager {
             loginMsg = null;
         }
 
-        this.loginMsg = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+        this.loginMsg = plugin.getServer().getGlobalRegionScheduler().runAtFixedRate(plugin, (s) -> {
             plugin.getServer().getOnlinePlayers().stream()
                     .filter(p -> unloginnedSet.contains(p.getUniqueId()))
                     .forEach(p -> LightLoginCommand.sendColorPrefixMessages(p, plugin.getLightConfiguration().getLoginMessages(), plugin));
@@ -67,7 +68,7 @@ public class BasicAuthenticationManager implements AuthenticationManager {
             registerMsg = null;
         }
 
-        this.registerMsg = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+        this.registerMsg = plugin.getServer().getGlobalRegionScheduler().runAtFixedRate(plugin, (s) -> {
                     plugin.getServer().getOnlinePlayers().stream()
                             .filter(p -> unregisteredSet.contains(p.getUniqueId()))
                             .forEach(p -> LightLoginCommand.sendColorPrefixMessages(p, plugin.getLightConfiguration().getRegisterMessage(), plugin));

@@ -34,15 +34,15 @@ import top.cmarco.lightlogin.configuration.LightConfiguration;
 import top.cmarco.lightlogin.data.AuthenticationManager;
 import top.cmarco.lightlogin.data.AutoKickManager;
 import top.cmarco.lightlogin.data.StartupLoginsManager;
-import top.cmarco.lightlogin.data.VoidLoginManager;
 import top.cmarco.lightlogin.database.LightLoginColumn;
 import top.cmarco.lightlogin.database.PluginDatabase;
 import top.cmarco.lightlogin.network.NetworkUtilities;
-import static top.cmarco.lightlogin.api.LoginUtils.whenOnline;
-import static top.cmarco.lightlogin.api.LoginUtils.whenOnlineOrElse;
 
 import java.net.InetAddress;
 import java.util.Objects;
+
+import static top.cmarco.lightlogin.api.LoginUtils.whenOnline;
+import static top.cmarco.lightlogin.api.LoginUtils.whenOnlineOrElse;
 
 public final class LoginAuthenticatorListener extends NamedListener {
 
@@ -86,13 +86,7 @@ public final class LoginAuthenticatorListener extends NamedListener {
     @EventHandler(priority = EventPriority.LOW)
     public void onJoin(final PlayerJoinEvent event) {
         final AutoKickManager autoKickManager = this.plugin.getAutoKickManager();
-        final VoidLoginManager voidLoginManager = this.plugin.getVoidLoginManager();
         final Player player = event.getPlayer();
-
-        if (voidLoginManager != null) {
-            voidLoginManager.sendLoginToVoid(player);
-            return;
-        }
 
         autoKickManager.addEntered(player);
 
@@ -114,7 +108,7 @@ public final class LoginAuthenticatorListener extends NamedListener {
                     if (row == null) {
                         whenOnline(player, p -> {
                             authManager.addUnregistered(p);
-                            runSync(plugin, () -> giveBlindness(p, plugin));
+                            runSyncEntity(p, plugin, () -> giveBlindness(p, plugin));
                         });
                         return;
                     }
@@ -122,7 +116,7 @@ public final class LoginAuthenticatorListener extends NamedListener {
                     whenOnlineOrElse(player, p -> {
                         if (!player.hasPermission("lightlogin.autologin")) {
                             authManager.addUnloginned(player);
-                            runSync(plugin, () -> giveBlindness(player, plugin));
+                            runSyncEntity(p, plugin, () -> giveBlindness(player, plugin));
                             return;
                         }
 
@@ -132,14 +126,14 @@ public final class LoginAuthenticatorListener extends NamedListener {
 
                         if (requireLogin || currentIpv4 != lastIpv4) {
 
-                            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                            plugin.getServer().getGlobalRegionScheduler().run(plugin, (s) -> {
                                 PlayerUnauthenticateEvent playerUnauthenticateEvent = new PlayerUnauthenticateEvent(player, AuthenticationCause.AUTOMATIC);
                                 this.plugin.getServer().getPluginManager().callEvent(playerUnauthenticateEvent);
                             });
 
                             authManager.unauthenticate(player);
                             authManager.addUnloginned(player);
-                            runSync(plugin, () -> giveBlindness(player, plugin));
+                            runSyncEntity(p, plugin, () -> giveBlindness(player, plugin));
                             return;
                         }
 
@@ -147,7 +141,7 @@ public final class LoginAuthenticatorListener extends NamedListener {
 
                         if ((timeNow - lastLogin) / 1E3 <= this.configuration.getSessionExpire()) {
 
-                            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                            plugin.getServer().getGlobalRegionScheduler().run(plugin, (s) -> {
                                 PlayerAuthenticateEvent playerAuthenticateEvent = new PlayerAuthenticateEvent(player, AuthenticationCause.AUTOMATIC);
                                 this.plugin.getServer().getPluginManager().callEvent(playerAuthenticateEvent);
                             });
@@ -157,7 +151,7 @@ public final class LoginAuthenticatorListener extends NamedListener {
 
                         } else {
                             authManager.addUnloginned(player);
-                            runSync(plugin, () -> giveBlindness(player, plugin));
+                            runSyncEntity(p, plugin, () -> giveBlindness(player, plugin));
                         }
 
                     }, authManager::addUnloginned);

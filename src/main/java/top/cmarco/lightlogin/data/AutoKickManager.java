@@ -18,10 +18,13 @@
 
 package top.cmarco.lightlogin.data;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import top.cmarco.lightlogin.LightLoginPlugin;
+import top.cmarco.lightlogin.configuration.LightConfiguration;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -33,7 +36,7 @@ public final class AutoKickManager {
     private final LightLoginPlugin plugin;
     private final Map<UUID, Long> joinedMap = new HashMap<>();
     private final LoginTimeoutBarManager timeoutBarManager;
-    private BukkitTask bukkitTask = null;
+    private ScheduledTask foliaTask = null;
 
     public AutoKickManager(@NotNull final LightLoginPlugin plugin) {
         this.plugin = plugin;
@@ -41,13 +44,13 @@ public final class AutoKickManager {
     }
 
     public void startAutoKickTask() {
-        if (bukkitTask != null) {
+        if (foliaTask != null) {
             stopAutoKickTask();
         }
 
         final AuthenticationManager authenticationManager = plugin.getAuthenticationManager();
         double ticks = plugin.getLightConfiguration().getKickAfterSeconds() * 1E3;
-        this.bukkitTask = plugin.getServer().getScheduler().runTaskTimer(plugin, ()-> {
+        this.foliaTask = plugin.getServer().getGlobalRegionScheduler().runAtFixedRate(plugin, (s)-> {
 
 
             final Collection<? extends Player> onlinePlayers = plugin.getServer().getOnlinePlayers();
@@ -71,20 +74,21 @@ public final class AutoKickManager {
                     return;
                 }
 
-                onlinePlayer.kickPlayer(plugin.getLightConfiguration().getLoginTookTooMuchTime());
-
+                LightConfiguration conf = plugin.getLightConfiguration();
+                Component kickMsg = LegacyComponentSerializer.legacyAmpersand().deserialize(conf.getLoginTookTooMuchTime().replace("{PREFIX}", conf.getMessagePrefix()).replace("{PLAYER}", onlinePlayer.getName()));
+                onlinePlayer.kick(kickMsg);
             }
 
         }, 1L, 20L);
     }
 
     public void stopAutoKickTask() {
-        if (bukkitTask == null) {
+        if (foliaTask == null) {
             return;
         }
 
-        bukkitTask.cancel();
-        bukkitTask = null;
+        foliaTask.cancel();
+        foliaTask = null;
     }
 
     public void addEntered(@NotNull final Player player) {

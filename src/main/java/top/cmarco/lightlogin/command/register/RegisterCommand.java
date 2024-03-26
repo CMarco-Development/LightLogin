@@ -41,7 +41,7 @@ public final class RegisterCommand extends LightLoginCommand {
     }
 
     @Override
-    protected void commandLogic(@NotNull CommandSender sender, @NotNull String[] args) {
+    protected void commandLogic(@NotNull final CommandSender sender, @NotNull final String[] args) {
 
         if (!(sender instanceof Player)) {
             return;
@@ -77,7 +77,7 @@ public final class RegisterCommand extends LightLoginCommand {
                         return;
                     }
 
-                    super.plugin.getServer().getScheduler().runTask(super.plugin, () -> {
+                    super.plugin.getServer().getGlobalRegionScheduler().run(super.plugin, (s) -> {
 
                         if (row != null) {
                             sendColorPrefixMessages(player, super.configuration.getAlreadyRegisteredMessage(), super.plugin);
@@ -110,7 +110,7 @@ public final class RegisterCommand extends LightLoginCommand {
                                     return;
                                 }
 
-                                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                plugin.getServer().getGlobalRegionScheduler().run(plugin, (t) -> {
                                     PlayerAuthenticateEvent playerAuthenticateEvent = new PlayerAuthenticateEvent(player, AuthenticationCause.COMMAND);
                                     this.plugin.getServer().getPluginManager().callEvent(playerAuthenticateEvent);
                                 });
@@ -124,7 +124,7 @@ public final class RegisterCommand extends LightLoginCommand {
                                 sendColorPrefixMessages(player, super.configuration.getRegisterSuccessMessage(), super.plugin);
 
                                 final PlayerRegisterEvent playerRegisterEvent = new PlayerRegisterEvent(player);
-                                super.plugin.getServer().getScheduler().runTask(super.plugin, () -> {
+                                super.plugin.getServer().getGlobalRegionScheduler().run(super.plugin, ($s) -> {
                                     super.plugin.getServer().getPluginManager().callEvent(playerRegisterEvent);
                                 });
                             });

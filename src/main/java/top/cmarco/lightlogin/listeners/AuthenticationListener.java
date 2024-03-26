@@ -36,12 +36,10 @@ import top.cmarco.lightlogin.log.AuthLogs;
 public class AuthenticationListener extends NamedListener {
 
     private final LightLoginPlugin plugin;
-    private final VoidLoginManager voidLoginManager;
 
     public AuthenticationListener(@NotNull final LightLoginPlugin plugin) {
         super("authentication_listener");
         this.plugin = plugin;
-        this.voidLoginManager = plugin.getVoidLoginManager();
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -54,7 +52,7 @@ public class AuthenticationListener extends NamedListener {
                 .filter(p -> !p.equals(player))
                 .forEach(p -> p.showPlayer(plugin, player));
 
-        runSync(plugin, () -> {
+        runSyncEntity(player, plugin, () -> {
             player.removePotionEffect(PotionEffectType.BLINDNESS);
 
             if (plugin.getLightConfiguration().isSoundsEnabled()) {
@@ -66,16 +64,12 @@ public class AuthenticationListener extends NamedListener {
         AuthLogs authLogs = plugin.getAuthLogs();
         authLogs.add("Player " + player.getName() + " has been authenticated through " + event.getAuthenticationCause().getFormalName());
 
-        if (voidLoginManager == null) {
-            return;
-        }
-        voidLoginManager.sendToLastLocation(player);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public final void onUnauth(@NotNull final PlayerUnauthenticateEvent event) {
         Player player = event.getPlayer();
-        runSync(plugin, () -> {
+        runSyncEntity(player, plugin, () -> {
             plugin.getAutoKickManager().cleanPlayerData(player);
             giveBlindness(player, plugin);
         });
@@ -97,13 +91,8 @@ public class AuthenticationListener extends NamedListener {
 
         Player player = Bukkit.getPlayer(event.getUuid());
         if (player != null && player.isOnline()) {
-            runSync(plugin, () -> giveBlindness(player, plugin));
+            runSyncEntity(player, plugin, () -> giveBlindness(player, plugin));
         }
-
-        if (voidLoginManager == null) {
-            return;
-        }
-
-        this.voidLoginManager.clearLastLocation(event.getUuid());
     }
+
 }

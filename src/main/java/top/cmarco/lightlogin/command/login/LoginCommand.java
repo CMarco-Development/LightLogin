@@ -47,9 +47,9 @@ public final class LoginCommand extends LightLoginCommand {
     }
 
     public void startClearTasks() {
-        super.plugin.getServer().getScheduler().runTaskTimer(
+        super.plugin.getServer().getGlobalRegionScheduler().runAtFixedRate(
                 super.plugin,
-                this.failedAttempts::clear,
+                (s) -> this.failedAttempts.clear(),
                 HOUR_TICKS * 24,
                 HOUR_TICKS * 24);
     }
@@ -57,11 +57,9 @@ public final class LoginCommand extends LightLoginCommand {
     @Override
     protected void commandLogic(@NotNull CommandSender sender, @NotNull String[] args) {
 
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof final Player player)) {
             return;
         }
-
-        final Player player = (Player) sender;
 
         if (args.length != 1) {
             sendColorPrefixMessages(player, super.configuration.getLoginIncorrectUsage(), super.plugin);
@@ -123,7 +121,7 @@ public final class LoginCommand extends LightLoginCommand {
 
                         plugin.getPlaintextPasswordManager().setPassword(player, password);
 
-                        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        plugin.getServer().getGlobalRegionScheduler().run(plugin, (s) -> {
                             PlayerAuthenticateEvent playerAuthenticateEvent = new PlayerAuthenticateEvent(player, AuthenticationCause.COMMAND);
                             this.plugin.getServer().getPluginManager().callEvent(playerAuthenticateEvent);
                         });
@@ -135,8 +133,8 @@ public final class LoginCommand extends LightLoginCommand {
 
                         if (player.isOnline()) {
 
-                            plugin.getServer().getScheduler()
-                                    .runTask(plugin, () -> {
+                            plugin.getServer().getGlobalRegionScheduler()
+                                    .run(plugin, (s) -> {
                                         PlayerWrongPasswordEvent event = new PlayerWrongPasswordEvent(player);
                                         plugin.getServer().getPluginManager().callEvent(event);
                                     });
@@ -151,7 +149,7 @@ public final class LoginCommand extends LightLoginCommand {
                         int currentAttempts = this.failedAttempts.get(uuid);
 
                         if (currentAttempts >= super.configuration.getMaxFailedAttempts() + 1) {
-                            super.plugin.getServer().getScheduler().runTask(super.plugin, () -> super.configuration.getBruteforcePunishment().forEach(cmd -> super.plugin.getServer().dispatchCommand(super.plugin.getServer().getConsoleSender(), cmd.replace("{PLAYER}", player.getName()))));
+                            super.plugin.getServer().getGlobalRegionScheduler().run(super.plugin, (s) -> super.configuration.getBruteforcePunishment().forEach(cmd -> super.plugin.getServer().dispatchCommand(super.plugin.getServer().getConsoleSender(), cmd.replace("{PLAYER}", player.getName()))));
                         } else {
                             this.failedAttempts.put(uuid, currentAttempts + 1);
                         }

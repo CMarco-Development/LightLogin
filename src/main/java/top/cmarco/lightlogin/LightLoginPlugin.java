@@ -54,7 +54,6 @@ public final class LightLoginPlugin extends JavaPlugin {
     private final EnumMap<ConfigurationFiles, FileConfiguration> languagesConfigMap = new EnumMap<>(ConfigurationFiles.class);
     private PlaintextPasswordManager plaintextPasswordManager = null;
     private boolean disabled = false;
-    private World loginWorld;
     private AuthLogs authLogs = null;
     private VoidLoginManager voidLoginManager = null;
     private StartupLoginsManager startupLoginsManager = null;
@@ -78,8 +77,6 @@ public final class LightLoginPlugin extends JavaPlugin {
         this.loadLibraries();
         this.setupConfig();
         this.setupDatabase();
-        this.loadLoginWorld(); // 1
-        this.setVoidLoginManager(); // 2
         this.setupAuthenticationManager();
         this.setupPasswordManager();
         this.setupStartupLoginsManager();
@@ -158,28 +155,10 @@ public final class LightLoginPlugin extends JavaPlugin {
         this.sendConsoleColoured(StartupLogo.getLoadingString(2));
     }
 
-    public void setVoidLoginManager() {
-        if (!this.lightConfiguration.isVoidWorldEnabled()) {
-            return;
-        }
-
-        this.sendConsoleColoured(StartupLogo.getLoadingString(3));
-        this.voidLoginManager = new VoidLoginManager(this.loginWorld);
-        this.sendConsoleColoured(StartupLogo.getLoadingString(4));
-    }
-
     private void setAuthLogs() {
         this.sendConsoleColoured(StartupLogo.getLoadingString(5));
         this.authLogs = new AuthLogs(this);
         this.sendConsoleColoured(StartupLogo.getLoadingString(6));
-    }
-
-    public void loadLoginWorld() {
-        if (!this.lightConfiguration.isVoidWorldEnabled() || loginWorld != null) {
-            return;
-        }
-
-        this.loginWorld = WorldUtils.findWorld(this.lightConfiguration);
     }
 
     private void saveAllConfigs() {
@@ -325,10 +304,6 @@ public final class LightLoginPlugin extends JavaPlugin {
 
     public AuthLogs getAuthLogs() {
         return authLogs;
-    }
-
-    public VoidLoginManager getVoidLoginManager() {
-        return voidLoginManager;
     }
 
     public StartupLoginsManager getStartupLoginsManager() {
